@@ -1,39 +1,52 @@
-variable "prebuilt_box_path" {
-  default = "C:\\Users\\AMEY\\Desktop\\terraform-gcp-ansible\\terraform\\prebuilt_box"
+terraform {
+  required_providers {
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.3"
+    }
+  }
 }
 
-locals {
-  vms = ["lb", "web1", "web2", "db"]
+variable "prebuilt_box_path" {
+  default = "C:/Users/AMEY/Desktop/terraform-gcp-ansible/terraform/prebuilt_box"
 }
 
 # -------------------------
-# Provision VMs with Vagrant in parallel
+# Provision VMs with Vagrant
 # -------------------------
 resource "null_resource" "vagrant_multi_vm" {
-  count = length(local.vms)
+  count = 4
 
   triggers = {
-    vm_name = local.vms[count.index]
+    vm_name = element(["lb", "web1", "web2", "db"], count.index)
   }
 
   provisioner "local-exec" {
-    command     = "start /b cmd /c \"cd /d ${var.prebuilt_box_path} && vagrant up ${local.vms[count.index]} --provider=virtualbox --provision\""
+    command     = <<EOT
+pushd "${var.prebuilt_box_path}" && \
+vagrant up ${element(["lb", "web1", "web2", "db"], count.index)} --provider=virtualbox --provision && \
+popd
+EOT
     interpreter = ["cmd", "/c"]
   }
 }
 
 # -------------------------
-# Configure VMs after boot in parallel
+# Configure VMs after boot
 # -------------------------
 resource "null_resource" "vm_configure" {
-  count = length(local.vms)
+  count = 4
 
   triggers = {
-    vm_name = local.vms[count.index]
+    vm_name = element(["lb", "web1", "web2", "db"], count.index)
   }
 
   provisioner "local-exec" {
-    command     = "start /b cmd /c \"cd /d ${var.prebuilt_box_path} && vagrant ssh ${local.vms[count.index]} -c \\\"echo VM ${local.vms[count.index]} is up\\\"\""
+    command     = <<EOT
+pushd "${var.prebuilt_box_path}" && \
+vagrant ssh ${element(["lb", "web1", "web2", "db"], count.index)} -c "echo VM ${element(["lb", "web1", "web2", "db"], count.index)} is up" && \
+popd
+EOT
     interpreter = ["cmd", "/c"]
   }
 }
