@@ -1,0 +1,19 @@
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+- name: Deploy index page
+  ansible.builtin.template:
+    src: index.html
+    dest: /var/www/html/index.html
+
+- name: Ensure Nginx is running
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes

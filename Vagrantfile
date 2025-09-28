@@ -1,18 +1,19 @@
-Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/jammy64"
-  config.vm.hostname = "local-web"
-  config.vm.network "forwarded_port", guest: 80, host: 8082
-  config.vm.synced_folder ".", "/vagrant"
+VAGRANT_API_VERSION = "2"
 
-  config.vm.provider "virtualbox" do |vb|
-    vb.memory = 2048
-    vb.cpus = 2
+Vagrant.configure(VAGRANT_API_VERSION) do |config|
+  # Common VM configuration
+  config.vm.box = "ubuntu/jammy64"
+
+  # Web server VM
+  config.vm.define "web" do |web|
+    web.vm.hostname = "web"
+    web.vm.network "private_network", ip: "192.168.56.10"
+    web.vm.network "forwarded_port", guest: 80, host: 8082
   end
 
-  config.vm.provision "ansible_local" do |ansible|
-    ansible.playbook = "ansible/playbook.yml"
-    ansible.extra_vars = {
-      vagrant_synced_folder: "/vagrant"
-    }
+  # Database VM
+  config.vm.define "db" do |db|
+    db.vm.hostname = "db"
+    db.vm.network "private_network", ip: "192.168.56.20"
   end
 end

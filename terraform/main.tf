@@ -10,7 +10,7 @@ terraform {
 
 provider "null" {}
 
-resource "null_resource" "vagrant_vm" {
+resource "null_resource" "vagrant_multi_vm" {
   triggers = {
     vagrantfile_sha = filesha256("${path.module}/../Vagrantfile")
   }
@@ -26,5 +26,5 @@ resource "null_resource" "vagrant_vm" {
 }
 
 output "vagrant_vm_info" {
-  value = "Vagrant VM brought up. Access Nginx at http://localhost:8080"
+  value = "Web VM running: http://localhost:8082, DB VM IP: 192.168.56.20"
 }
