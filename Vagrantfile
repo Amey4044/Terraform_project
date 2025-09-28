@@ -9,7 +9,7 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
     vb.customize ["modifyvm", :id, "--natpf1", "delete", "ssh"]
   end
 
-  # --- Load Balancer (Nginx reverse proxy) ---
+  # ---------------- Load Balancer (Nginx Reverse Proxy) ----------------
   config.vm.define "lb" do |lb|
     lb.vm.hostname = "lb"
     lb.vm.network "private_network", ip: "192.168.56.5"
@@ -20,7 +20,9 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
     lb.vm.provision "shell", inline: <<-SHELL
       sudo apt-get update -y
       sudo apt-get install -y nginx
-      sudo tee /etc/nginx/sites-available/loadbalancer <<EOF
+
+      # Configure load balancer
+      sudo tee /etc/nginx/sites-available/loadbalancer <<'EOF'
 upstream backend {
     server 192.168.56.101;
     server 192.168.56.102;
@@ -31,20 +33,23 @@ server {
 
     location / {
         proxy_pass http://backend;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 EOF
+
       sudo ln -sf /etc/nginx/sites-available/loadbalancer /etc/nginx/sites-enabled/loadbalancer
       sudo rm -f /etc/nginx/sites-enabled/default
+      sudo nginx -t
       sudo systemctl enable nginx
       sudo systemctl restart nginx
     SHELL
   end
 
-  # --- Web 1 ---
+  # ---------------- Web Server 1 ----------------
   config.vm.define "web1" do |web|
     web.vm.hostname = "web1"
     web.vm.network "private_network", ip: "192.168.56.101"
@@ -61,7 +66,7 @@ EOF
     SHELL
   end
 
-  # --- Web 2 ---
+  # ---------------- Web Server 2 ----------------
   config.vm.define "web2" do |web|
     web.vm.hostname = "web2"
     web.vm.network "private_network", ip: "192.168.56.102"
@@ -78,7 +83,7 @@ EOF
     SHELL
   end
 
-  # --- Database ---
+  # ---------------- Database Server ----------------
   config.vm.define "db" do |db|
     db.vm.hostname = "db"
     db.vm.network "private_network", ip: "192.168.56.20"
