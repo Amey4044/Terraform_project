@@ -2,30 +2,34 @@ VAGRANT_API_VERSION = "2"
 
 Vagrant.configure(VAGRANT_API_VERSION) do |config|
   config.vm.box = "ubuntu/jammy64"
-  config.vm.boot_timeout = 600   # allow longer boot
 
   # Load Balancer VM
   config.vm.define "lb" do |lb|
     lb.vm.hostname = "lb"
     lb.vm.network "private_network", ip: "192.168.56.5"
-    lb.vm.network "forwarded_port", guest: 80, host: 8081
-    lb.vm.network "forwarded_port", guest: 22, host: 2221
+    lb.vm.network "forwarded_port", guest: 80, host: 8083
+    lb.vm.network "forwarded_port", guest: 22, host: 2223   # SSH unique
   end
 
   # Web VMs
-  (1..2).each do |i|
-    config.vm.define "web#{i}" do |web|
-      web.vm.hostname = "web#{i}"
-      web.vm.network "private_network", ip: "192.168.56.10#{i}"
-      web.vm.network "forwarded_port", guest: 80, host: 8081 + i   # web1 => 8082, web2 => 8083
-      web.vm.network "forwarded_port", guest: 22, host: 2221 + i   # web1 => 2222, web2 => 2223
-    end
+  config.vm.define "web1" do |web|
+    web.vm.hostname = "web1"
+    web.vm.network "private_network", ip: "192.168.56.101"
+    web.vm.network "forwarded_port", guest: 80, host: 8084
+    web.vm.network "forwarded_port", guest: 22, host: 2224   # SSH unique
+  end
+
+  config.vm.define "web2" do |web|
+    web.vm.hostname = "web2"
+    web.vm.network "private_network", ip: "192.168.56.102"
+    web.vm.network "forwarded_port", guest: 80, host: 8085
+    web.vm.network "forwarded_port", guest: 22, host: 2225   # SSH unique
   end
 
   # DB VM
   config.vm.define "db" do |db|
     db.vm.hostname = "db"
     db.vm.network "private_network", ip: "192.168.56.20"
-    db.vm.network "forwarded_port", guest: 22, host: 2230
+    db.vm.network "forwarded_port", guest: 22, host: 2230    # SSH unique
   end
 end
