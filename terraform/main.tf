@@ -15,7 +15,7 @@ resource "null_resource" "vagrant_multi_vm" {
   }
 
   provisioner "local-exec" {
-    command = "cd ./.. && vagrant up --provision"
+    command = "cd ./.. && vagrant up --provision --parallel"
   }
 }
 
@@ -23,8 +23,8 @@ resource "null_resource" "vagrant_multi_vm" {
 output "vagrant_vm_info" {
   value = <<EOT
 Load Balancer:  http://localhost:8083  (SSH: localhost:2223)
-Web1:           http://localhost:8084  (SSH: localhost:2223)
-Web2:           http://localhost:8085  (SSH: localhost:2224)
+Web1:           http://localhost:8084  (SSH: localhost:2224)
+Web2:           http://localhost:8086  (SSH: localhost:2225)
 Database:       SSH: localhost:2230
 Private IPs:    LB=192.168.56.5, Web1=192.168.56.101, Web2=192.168.56.102, DB=192.168.56.20
 EOT
