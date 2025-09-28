@@ -4,11 +4,12 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
   config.vm.box = "ubuntu/jammy64"
   config.vm.boot_timeout = 1200  # 20 minutes
 
+  # Remove default NAT SSH port (2222) to avoid conflicts
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--natpf1", "delete", "ssh"]
   end
 
-  # --- Load Balancer ---
+  # --- Load Balancer (Nginx reverse proxy) ---
   config.vm.define "lb" do |lb|
     lb.vm.hostname = "lb"
     lb.vm.network "private_network", ip: "192.168.56.5"
@@ -19,9 +20,27 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
     lb.vm.provision "shell", inline: <<-SHELL
       sudo apt-get update -y
       sudo apt-get install -y nginx
-      echo "<h1>Load Balancer</h1>" | sudo tee /var/www/html/index.html
+      sudo tee /etc/nginx/sites-available/loadbalancer <<EOF
+upstream backend {
+    server 192.168.56.101;
+    server 192.168.56.102;
+}
+
+server {
+    listen 80;
+
+    location / {
+        proxy_pass http://backend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+}
+EOF
+      sudo ln -sf /etc/nginx/sites-available/loadbalancer /etc/nginx/sites-enabled/loadbalancer
+      sudo rm -f /etc/nginx/sites-enabled/default
       sudo systemctl enable nginx
-      sudo systemctl start nginx
+      sudo systemctl restart nginx
     SHELL
   end
 
