@@ -15,6 +15,7 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
     config.vm.define "web#{i}" do |web|
       web.vm.hostname = "web#{i}"
       web.vm.network "private_network", ip: "192.168.56.10#{i}"
+      web.vm.network "forwarded_port", guest: 80, host: 8082 + i  # 8083, 8084
     end
   end
 
