@@ -11,11 +11,11 @@ terraform {
 resource "null_resource" "vagrant_multi_vm" {
   # Force recreation if Vagrantfile changes
   triggers = {
-    vagrantfile_sha = filesha("../Vagrantfile")
+    vagrantfile_sha = filesha1("../Vagrantfile")
   }
 
   provisioner "local-exec" {
-    command = "cd ./.. && vagrant destroy -f && vagrant up --provision"
+    command = "cd ./.. && vagrant up --provision"
   }
 }
 
