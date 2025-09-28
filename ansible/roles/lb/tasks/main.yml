@@ -7,13 +7,12 @@
     name: nginx
     state: present
 
-- name: Deploy index page
+- name: Configure LB
   template:
-    src: index.html.j2
-    dest: "{{ webroot }}/index.html"
-    mode: '0644'
+    src: lb.conf.j2
+    dest: /etc/nginx/sites-available/default
 
-- name: Ensure Nginx running
+- name: Restart Nginx
   service:
     name: nginx
     state: restarted

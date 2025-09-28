@@ -1,14 +1,22 @@
 - name: Update apt cache
-  ansible.builtin.apt:
+  apt:
     update_cache: yes
 
 - name: Install MySQL server
-  ansible.builtin.apt:
+  apt:
     name: mysql-server
     state: present
 
-- name: Ensure MySQL service is running
-  ansible.builtin.service:
+- name: Ensure MySQL running
+  service:
     name: mysql
     state: started
     enabled: yes
+
+- name: Set root password
+  mysql_user:
+    name: root
+    host: localhost
+    password: "{{ db_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    priv: '*.*:ALL,GRANT'

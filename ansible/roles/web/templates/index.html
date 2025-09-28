@@ -1,2 +1,11 @@
-<h1>Welcome to Web VM!</h1>
-<p>Connected to DB at 192.168.56.20</p>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>{{ project_name }}</title>
+</head>
+<body>
+  <h1>It works! — {{ project_name }} served from {{ ansible_hostname }}</h1>
+  <p>Deployed by Ansible via Vagrant (provisioned by Terraform).</p>
+</body>
+</html>
