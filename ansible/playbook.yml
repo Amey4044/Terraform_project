@@ -1,14 +1,94 @@
-- hosts: lb
+---
+- name: Configure Web Servers
+  hosts: web
   become: true
-  roles:
-    - lb
+  vars:
+    webroot: /var/www/html
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
 
-- hosts: web
-  become: true
-  roles:
-    - web
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
 
-- hosts: db
+    - name: Ensure nginx service running and enabled
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Deploy simple index page
+      copy:
+        dest: "{{ webroot }}/index.html"
+        content: |
+          <!doctype html>
+          <html>
+            <head><meta charset="utf-8" /><title>Web Server</title></head>
+            <body>
+              <h1>Web Server {{ inventory_hostname }} is running!</h1>
+            </body>
+          </html>
+        mode: '0644'
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+- name: Configure Load Balancer
+  hosts: lb
   become: true
-  roles:
-    - db
+  vars:
+    lb_conf_path: /etc/nginx/sites-available/default
+    web_servers:
+      - 192.168.56.101
+      - 192.168.56.102
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Configure Nginx as Load Balancer
+      copy:
+        dest: "{{ lb_conf_path }}"
+        content: |
+          upstream backend {
+            {% for server in web_servers %}
+            server {{ server }};
+            {% endfor %}
+          }
+
+          server {
+            listen 80 default_server;
+            listen [::]:80 default_server;
+
+            location / {
+              proxy_pass http://backend;
+            }
+          }
+      notify:
+        - Reload Nginx
+
+  handlers:
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
+
+- name: Configure DB Server
+  hosts: db
+  become: true
+  tasks:
+    - name: Just a placeholder task
+      debug:
+        msg: "DB server {{ inventory_hostname }} ready"

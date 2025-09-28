@@ -1,18 +1,25 @@
-resource "null_resource" "vagrant_multi_vm" {
-  triggers = {
-    vagrantfile_sha = filesha256("${path.module}/../Vagrantfile")
-  }
-
-  provisioner "local-exec" {
-    command = "cd ${path.module}/.. && vagrant up --provision"
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = "cd ${path.module}/.. && vagrant destroy -f"
+terraform {
+  required_providers {
+    null = {
+      source  = "hashicorp/null"
+      version = "3.2.4"
+    }
   }
 }
 
+# Local-exec null resource to manage Vagrant VMs
+resource "null_resource" "vagrant_multi_vm" {
+  # Force recreation if Vagrantfile changes
+  triggers = {
+    vagrantfile_sha = filesha("../Vagrantfile")
+  }
+
+  provisioner "local-exec" {
+    command = "cd ./.. && vagrant destroy -f && vagrant up --provision"
+  }
+}
+
+# Output VM info
 output "vagrant_vm_info" {
   value = "Web LB running: http://localhost:8082, Web IPs: 192.168.56.101-102, DB IP: 192.168.56.20"
 }
