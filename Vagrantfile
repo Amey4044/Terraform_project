@@ -8,7 +8,7 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
   config.vm.define "web" do |web|
     web.vm.hostname = "web"
     web.vm.network "private_network", ip: "192.168.56.10"
-    web.vm.network "forwarded_port", guest: 80, host: 8082
+    web.vm.network "forwarded_port", guest: 80, host: 8085
   end
 
   # Database VM
