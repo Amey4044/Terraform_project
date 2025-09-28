@@ -1,8 +1,7 @@
 terraform {
   required_providers {
     null = {
-      source  = "hashicorp/null"
-      version = "~> 3.3"
+      source = "hashicorp/null"
     }
   }
 }
@@ -22,11 +21,7 @@ resource "null_resource" "vagrant_multi_vm" {
   }
 
   provisioner "local-exec" {
-    command     = <<EOT
-pushd "${var.prebuilt_box_path}" && \
-vagrant up ${element(["lb", "web1", "web2", "db"], count.index)} --provider=virtualbox --provision && \
-popd
-EOT
+    command     = "pushd ${var.prebuilt_box_path} & vagrant up ${element(["lb", "web1", "web2", "db"], count.index)} --provider=virtualbox --provision & popd"
     interpreter = ["cmd", "/c"]
   }
 }
@@ -42,11 +37,7 @@ resource "null_resource" "vm_configure" {
   }
 
   provisioner "local-exec" {
-    command     = <<EOT
-pushd "${var.prebuilt_box_path}" && \
-vagrant ssh ${element(["lb", "web1", "web2", "db"], count.index)} -c "echo VM ${element(["lb", "web1", "web2", "db"], count.index)} is up" && \
-popd
-EOT
+    command     = "pushd ${var.prebuilt_box_path} & vagrant ssh ${element(["lb", "web1", "web2", "db"], count.index)} -c \"echo VM ${element(["lb", "web1", "web2", "db"], count.index)} is up\" & popd"
     interpreter = ["cmd", "/c"]
   }
 }
