@@ -1,0 +1,15 @@
+# Vagrant
+.vagrant/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+
+# Ansible
+*.retry
+
+# OS
+.DS_Store

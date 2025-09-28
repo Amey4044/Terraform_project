@@ -1,0 +1,43 @@
+- name: Configure VM and deploy Nginx
+  hosts: all
+  become: true
+  vars:
+    webroot: /var/www/html
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Ensure nginx service running and enabled
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Deploy simple index page
+      copy:
+        dest: "{{ webroot }}/index.html"
+        content: |
+          <!doctype html>
+          <html>
+            <head>
+              <meta charset="utf-8" />
+              <title>Terraform + Vagrant + Ansible</title>
+            </head>
+            <body>
+              <h1>It works! — Nginx served from the Vagrant VM</h1>
+              <p>Deployed by Ansible via Vagrant (provisioned by Terraform).</p>
+            </body>
+          </html>
+        mode: '0644'
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
