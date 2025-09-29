@@ -3,10 +3,31 @@ VAGRANT_API_VERSION = "2"
 Vagrant.configure(VAGRANT_API_VERSION) do |config|
   config.vm.box = "ubuntu/jammy64"
 
-  config.vm.provider "virtualbox" do |vb|
-    vb.memory = 1024
-    vb.cpus = 1
-  end
+  # VM Definitions
+  vms = [
+    { name: "lb",   ip: "192.168.56.5",   ssh: 2223, http: 8083 },
+    { name: "web1", ip: "192.168.56.101", ssh: 2224, http: 8084 },
+    { name: "web2", ip: "192.168.56.102", ssh: 2225, http: 8086 },
+    { name: "db",   ip: "192.168.56.20",  ssh: 2230, http: nil }
+  ]
 
-  # VMs are defined dynamically via Terraform, all VMs will use these settings
+  vms.each do |vm|
+    config.vm.define vm[:name] do |machine|
+      machine.vm.hostname = vm[:name]
+      machine.vm.network "private_network", ip: vm[:ip]
+
+      # Forward SSH port
+      machine.vm.network "forwarded_port", guest: 22, host: vm[:ssh]
+
+      # Forward HTTP port if exists
+      if vm[:http]
+        machine.vm.network "forwarded_port", guest: 80, host: vm[:http]
+      end
+
+      machine.vm.provider "virtualbox" do |vb|
+        vb.memory = 1024
+        vb.cpus = 1
+      end
+    end
+  end
 end
