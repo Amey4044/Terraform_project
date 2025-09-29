@@ -1,31 +1,30 @@
-VAGRANTFILE_API_VERSION = "2"
+VAGRANT_API_VERSION = "2"
 
-nodes = [
-  { name: "lb",   ip: "192.168.56.5",   ports: [{guest:80, host:8083}, {guest:22, host:2223}] },
-  { name: "web1", ip: "192.168.56.101", ports: [{guest:80, host:8084}, {guest:22, host:2224}] },
-  { name: "web2", ip: "192.168.56.102", ports: [{guest:80, host:8086}, {guest:22, host:2225}] },
-  { name: "db",   ip: "192.168.56.20",  ports: [{guest:22, host:2230}] }
-]
+Vagrant.configure(VAGRANT_API_VERSION) do |config|
+  config.vm.box = "ubuntu/jammy64"
 
-nodes.each do |node|
-  Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-    config.vm.define node[:name] do |vm|
-      vm.vm.box = "ubuntu/jammy64"
-      vm.vm.hostname = node[:name]
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 1024
+    vb.cpus = 1
+  end
 
-      # Set VM resources
-      vm.vm.provider "virtualbox" do |vb|
-        vb.memory = 1024
-        vb.cpus   = 1
+  machines = {
+    "lb"   => { ip: "192.168.56.5",   host_http: 8083, host_ssh: 2223 },
+    "web1" => { ip: "192.168.56.101", host_http: 8084, host_ssh: 2224 },
+    "web2" => { ip: "192.168.56.102", host_http: 8086, host_ssh: 2225 },
+    "db"   => { ip: "192.168.56.20",  host_ssh: 2230 }
+  }
+
+  machines.each do |name, opts|
+    config.vm.define name do |vm|
+      vm.vm.hostname = name
+      vm.vm.network "private_network", ip: opts[:ip]
+
+      if opts[:host_http]
+        vm.vm.network "forwarded_port", guest: 80, host: opts[:host_http], auto_correct: true
       end
 
-      # Set network interfaces
-      vm.vm.network "private_network", ip: node[:ip]
-
-      # Forwarded ports
-      node[:ports].each do |port|
-        vm.vm.network "forwarded_port", guest: port[:guest], host: port[:host]
-      end
+      vm.vm.network "forwarded_port", guest: 22, host: opts[:host_ssh], auto_correct: true
     end
   end
 end

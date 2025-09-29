@@ -1,10 +1,96 @@
 ---
-- name: Deploy All Infrastructure
-  hosts: all
+- name: Configure Web Servers
+  hosts: webservers
   become: true
-  gather_facts: true
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
 
-  roles:
-    - { role: lb, when: "'lb' in inventory_hostname" }
-    - { role: web, when: "'web' in inventory_hostname" }
-    - { role: db, when: "'db' in inventory_hostname" }
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Deploy index page
+      copy:
+        dest: /var/www/html/index.html
+        content: |
+          <!doctype html>
+          <html>
+            <head><title>Web Server</title></head>
+            <body>
+              <h1>Web Server {{ inventory_hostname }} is running!</h1>
+            </body>
+          </html>
+        mode: '0644'
+
+    - name: Ensure nginx running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+- name: Configure Load Balancer
+  hosts: loadbalancer
+  become: true
+  vars:
+    web_servers:
+      - 192.168.56.101
+      - 192.168.56.102
+  tasks:
+    - name: Install haproxy
+      apt:
+        name: haproxy
+        state: present
+        update_cache: yes
+
+    - name: Configure HAProxy
+      copy:
+        dest: /etc/haproxy/haproxy.cfg
+        content: |
+          global
+              log /dev/log local0
+              daemon
+
+          defaults
+              log global
+              mode http
+              option httplog
+              option dontlognull
+              timeout connect 5000ms
+              timeout client 50000ms
+              timeout server 50000ms
+
+          frontend http_front
+              bind *:80
+              default_backend web_back
+
+          backend web_back
+              balance roundrobin
+          {% for s in web_servers %}
+              server {{ s }} {{ s }}:80 check
+          {% endfor %}
+
+    - name: Restart haproxy
+      service:
+        name: haproxy
+        state: restarted
+        enabled: yes
+
+- name: Configure DB Server
+  hosts: databases
+  become: true
+  tasks:
+    - name: Install MySQL server
+      apt:
+        name: mysql-server
+        state: present
+        update_cache: yes
+
+    - name: Ensure MySQL running
+      service:
+        name: mysql
+        state: started
+        enabled: yes

@@ -11,31 +11,18 @@ variable "prebuilt_box_path" {
   default = "C:/Users/AMEY/Desktop/terraform-gcp-ansible/prebuilt_box"
 }
 
-# Step 1: Bring up Vagrant VMs
+# Step 1: Bring up all Vagrant VMs
 resource "null_resource" "vagrant_up" {
-  count = 4
-
   triggers = {
-    vm_name = element(["lb", "web1", "web2", "db"], count.index)
+    vagrantfile_sha = filesha1("${var.prebuilt_box_path}/Vagrantfile")
   }
 
   provisioner "local-exec" {
     interpreter = ["PowerShell", "-Command"]
-    command     = "cd '${var.prebuilt_box_path}'; vagrant up ${self.triggers.vm_name} --provider=virtualbox --provision"
+    command     = "Push-Location '${var.prebuilt_box_path}'; vagrant up --provider=virtualbox --provision; Pop-Location"
   }
 }
 
-# Step 2: Run Ansible after VMs are up
-resource "null_resource" "ansible_provision" {
-  depends_on = [null_resource.vagrant_up]
-
-  provisioner "local-exec" {
-    interpreter = ["PowerShell", "-Command"]
-    command     = "cd '${path.module}/../ansible'; ansible-playbook -i inventory.ini playbook.yml"
-  }
-}
-
-# Output info
 output "vm_info" {
   value = <<EOT
 Load Balancer:  http://localhost:8083  (SSH: localhost:2223)
