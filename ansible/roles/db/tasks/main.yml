@@ -1,22 +1,14 @@
-- name: Update apt cache
-  apt:
-    update_cache: yes
-
-- name: Install MySQL server
+- name: Install MySQL
   apt:
     name: mysql-server
     state: present
+    update_cache: yes
 
-- name: Ensure MySQL running
+- name: Start MySQL
   service:
     name: mysql
     state: started
     enabled: yes
 
 - name: Set root password
-  mysql_user:
-    name: root
-    host: localhost
-    password: "{{ db_root_password }}"
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-    priv: '*.*:ALL,GRANT'
+  command: mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root123'; FLUSH PRIVILEGES;"
