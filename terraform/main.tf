@@ -25,6 +25,34 @@ resource "null_resource" "vagrant_up" {
   }
 }
 
+# Generate dynamic Ansible inventory
+resource "local_file" "ansible_inventory" {
+  content = <<EOT
+[loadbalancer]
+lb ansible_host=127.0.0.1 ansible_port=2223 ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
+
+[webservers]
+web1 ansible_host=127.0.0.1 ansible_port=2224 ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
+web2 ansible_host=127.0.0.1 ansible_port=2225 ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
+
+[databases]
+db ansible_host=127.0.0.1 ansible_port=2230 ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
+EOT
+
+  filename   = "../ansible/inventory.ini"
+  depends_on = [null_resource.vagrant_up]
+}
+
+# Run Ansible playbook after VMs are up
+resource "null_resource" "ansible_provision" {
+  depends_on = [null_resource.vagrant_up, local_file.ansible_inventory]
+
+  provisioner "local-exec" {
+    interpreter = ["PowerShell", "-Command"]
+    command     = "Push-Location '../ansible'; ansible-playbook -i inventory.ini playbook.yml; Pop-Location"
+  }
+}
+
 # Output VM Info
 output "vm_info" {
   value = <<EOT

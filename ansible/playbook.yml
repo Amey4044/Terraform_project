@@ -1,131 +1,14 @@
----
-- name: Configure Web Servers
-  hosts: web
+- hosts: webservers
   become: true
-  vars:
-    webroot: /var/www/html
-  tasks:
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
+  roles:
+    - webserver
 
-    - name: Install nginx
-      apt:
-        name: nginx
-        state: present
-
-    - name: Ensure nginx service running and enabled
-      service:
-        name: nginx
-        state: started
-        enabled: true
-
-    - name: Deploy simple index page
-      copy:
-        dest: "{{ webroot }}/index.html"
-        content: |
-          <!doctype html>
-          <html>
-            <head><meta charset="utf-8" /><title>Web Server</title></head>
-            <body>
-              <h1>Web Server {{ inventory_hostname }} is running!</h1>
-            </body>
-          </html>
-        mode: '0644'
-
-    - name: Restart nginx
-      service:
-        name: nginx
-        state: restarted
-
-# -----------------------
-# Load Balancer Setup
-# -----------------------
-- name: Configure Load Balancer
-  hosts: lb
+- hosts: databases
   become: true
-  vars:
-    lb_conf_path: /etc/nginx/sites-available/loadbalancer
-    web_servers:
-      - 192.168.56.101
-      - 192.168.56.102
-  tasks:
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
+  roles:
+    - database
 
-    - name: Install nginx
-      apt:
-        name: nginx
-        state: present
-
-    - name: Configure Nginx as Load Balancer
-      copy:
-        dest: "{{ lb_conf_path }}"
-        content: |
-          upstream backend {
-            {% for server in web_servers %}
-            server {{ server }};
-            {% endfor %}
-          }
-
-          server {
-            listen 80;
-            location / {
-              proxy_pass http://backend;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            }
-          }
-      notify:
-        - Reload Nginx
-
-    - name: Enable load balancer config
-      file:
-        src: "{{ lb_conf_path }}"
-        dest: /etc/nginx/sites-enabled/loadbalancer
-        state: link
-        force: yes
-
-    - name: Remove default nginx config
-      file:
-        path: /etc/nginx/sites-enabled/default
-        state: absent
-
-  handlers:
-    - name: Reload Nginx
-      service:
-        name: nginx
-        state: reloaded
-
-# -----------------------
-# Database Setup
-# -----------------------
-- name: Configure DB Server
-  hosts: db
+- hosts: loadbalancer
   become: true
-  tasks:
-    - name: Install MySQL server
-      apt:
-        name: mysql-server
-        state: present
-        update_cache: yes
-
-    - name: Ensure MySQL is running
-      service:
-        name: mysql
-        state: started
-        enabled: true
-
-    - name: Set root password
-      command: >
-        mysql -e "ALTER USER 'root'@'localhost'
-        IDENTIFIED WITH mysql_native_password
-        BY 'root123'; FLUSH PRIVILEGES;"
-
-    - name: Debug message
-      debug:
-        msg: "DB server {{ inventory_hostname }} is ready with MySQL root password = root123"
+  roles:
+    - loadbalancer

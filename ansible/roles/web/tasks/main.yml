@@ -4,12 +4,15 @@
     state: present
     update_cache: yes
 
-- name: Create Web Page
+- name: Copy test index.html
   copy:
+    src: index.html
     dest: /var/www/html/index.html
-    content: "<h1>{{ inventory_hostname }}</h1>"
+    owner: www-data
+    group: www-data
+    mode: '0644'
 
-- name: Start Nginx
+- name: Ensure Nginx is running
   service:
     name: nginx
     state: started

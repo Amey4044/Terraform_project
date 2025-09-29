@@ -1,11 +1,5 @@
-<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>{{ project_name }}</title>
-</head>
-<body>
-  <h1>It works! — {{ project_name }} served from {{ ansible_hostname }}</h1>
-  <p>Deployed by Ansible via Vagrant (provisioned by Terraform).</p>
-</body>
+  <body>
+    <h1>Hello from {{ inventory_hostname }}</h1>
+  </body>
 </html>

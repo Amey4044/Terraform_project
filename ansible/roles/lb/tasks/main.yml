@@ -4,22 +4,22 @@
     state: present
     update_cache: yes
 
-- name: Configure Nginx Load Balancer
-  template:
-    src: loadbalancer.conf.j2
-    dest: /etc/nginx/sites-available/loadbalancer
+- name: Configure load balancer
+  copy:
+    dest: /etc/nginx/sites-available/default
+    content: |
+      upstream web_backend {
+          server 192.168.56.101;
+          server 192.168.56.102;
+      }
 
-- name: Enable Load Balancer Config
-  file:
-    src: /etc/nginx/sites-available/loadbalancer
-    dest: /etc/nginx/sites-enabled/loadbalancer
-    state: link
-    force: yes
+      server {
+          listen 80;
 
-- name: Remove default site
-  file:
-    path: /etc/nginx/sites-enabled/default
-    state: absent
+          location / {
+              proxy_pass http://web_backend;
+          }
+      }
 
 - name: Restart Nginx
   service:
