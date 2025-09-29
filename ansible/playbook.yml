@@ -1,4 +1,3 @@
----
 - name: Configure Web Servers
   hosts: webservers
   become: true
@@ -36,9 +35,7 @@
   hosts: loadbalancer
   become: true
   vars:
-    web_servers:
-      - 192.168.56.101
-      - 192.168.56.102
+    web_servers: "{{ groups['webservers'] | map('extract', hostvars, ['ansible_host']) | list }}"
   tasks:
     - name: Install haproxy
       apt:

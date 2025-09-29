@@ -1,12 +1,19 @@
-variable "prebuilt_box_path" {
-  default = "C:/Users/AMEY/Desktop/terraform-gcp-ansible/prebuilt_box"
+variable "vms" {
+  type = list(object({
+    name      = string
+    ip        = string
+    ssh_port  = number
+    http_port = number
+    role      = string
+  }))
+  default = [
+    { name = "lb", ip = "192.168.56.5", ssh_port = 2223, http_port = 8083, role = "loadbalancer" },
+    { name = "web1", ip = "192.168.56.101", ssh_port = 2224, http_port = 8084, role = "webserver" },
+    { name = "web2", ip = "192.168.56.102", ssh_port = 2225, http_port = 8086, role = "webserver" },
+    { name = "db", ip = "192.168.56.20", ssh_port = 2230, http_port = 0, role = "database" }
+  ]
 }
 
-variable "vms" {
-  default = [
-    { name = "lb", ip = "192.168.56.5", ports = [8083, 2223] },
-    { name = "web1", ip = "192.168.56.101", ports = [8084, 2224] },
-    { name = "web2", ip = "192.168.56.102", ports = [8086, 2225] },
-    { name = "db", ip = "192.168.56.20", ports = [2230] }
-  ]
+variable "prebuilt_box_path" {
+  default = "C:/Users/AMEY/Desktop/terraform-gcp-ansible/prebuilt_box"
 }

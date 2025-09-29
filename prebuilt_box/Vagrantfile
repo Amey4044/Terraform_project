@@ -8,23 +8,5 @@ Vagrant.configure(VAGRANT_API_VERSION) do |config|
     vb.cpus = 1
   end
 
-  machines = {
-    "lb"   => { ip: "192.168.56.5",   host_http: 8083, host_ssh: 2223 },
-    "web1" => { ip: "192.168.56.101", host_http: 8084, host_ssh: 2224 },
-    "web2" => { ip: "192.168.56.102", host_http: 8086, host_ssh: 2225 },
-    "db"   => { ip: "192.168.56.20",  host_ssh: 2230 }
-  }
-
-  machines.each do |name, opts|
-    config.vm.define name do |vm|
-      vm.vm.hostname = name
-      vm.vm.network "private_network", ip: opts[:ip]
-
-      if opts[:host_http]
-        vm.vm.network "forwarded_port", guest: 80, host: opts[:host_http], auto_correct: true
-      end
-
-      vm.vm.network "forwarded_port", guest: 22, host: opts[:host_ssh], auto_correct: true
-    end
-  end
+  # VMs are defined dynamically via Terraform, all VMs will use these settings
 end
