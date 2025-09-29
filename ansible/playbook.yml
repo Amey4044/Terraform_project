@@ -1,14 +1,10 @@
-- hosts: webservers
+---
+- name: Deploy All Infrastructure
+  hosts: all
   become: true
-  roles:
-    - webserver
+  gather_facts: true
 
-- hosts: databases
-  become: true
   roles:
-    - database
-
-- hosts: loadbalancer
-  become: true
-  roles:
-    - loadbalancer
+    - { role: lb, when: "'lb' in inventory_hostname" }
+    - { role: web, when: "'web' in inventory_hostname" }
+    - { role: db, when: "'db' in inventory_hostname" }

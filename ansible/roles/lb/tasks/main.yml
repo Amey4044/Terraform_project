@@ -1,27 +1,25 @@
-- name: Install Nginx
+---
+- name: Install HAProxy
   apt:
-    name: nginx
+    name: haproxy
     state: present
     update_cache: yes
 
-- name: Configure load balancer
-  copy:
-    dest: /etc/nginx/sites-available/default
-    content: |
-      upstream web_backend {
-          server 192.168.56.101;
-          server 192.168.56.102;
-      }
+- name: Configure HAProxy
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+  notify:
+    - Restart HAProxy
 
-      server {
-          listen 80;
-
-          location / {
-              proxy_pass http://web_backend;
-          }
-      }
-
-- name: Restart Nginx
+- name: Ensure HAProxy is running
   service:
-    name: nginx
+    name: haproxy
+    state: started
+    enabled: yes
+
+# Handlers
+- name: Restart HAProxy
+  service:
+    name: haproxy
     state: restarted

@@ -1,16 +1,9 @@
+---
 - name: Install Nginx
   apt:
     name: nginx
     state: present
     update_cache: yes
-
-- name: Copy test index.html
-  copy:
-    src: index.html
-    dest: /var/www/html/index.html
-    owner: www-data
-    group: www-data
-    mode: '0644'
 
 - name: Ensure Nginx is running
   service:

@@ -1,16 +1,12 @@
-- name: Install MySQL Server
+---
+- name: Install MySQL server
   apt:
     name: mysql-server
     state: present
     update_cache: yes
 
-- name: Start MySQL service
+- name: Ensure MySQL is running
   service:
     name: mysql
     state: started
     enabled: yes
-
-- name: Create database
-  mysql_db:
-    name: myapp
-    state: present

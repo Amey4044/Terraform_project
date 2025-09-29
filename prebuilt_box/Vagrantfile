@@ -1,41 +1,31 @@
-VAGRANT_API_VERSION = "2"
+VAGRANTFILE_API_VERSION = "2"
 
-Vagrant.configure(VAGRANT_API_VERSION) do |config|
-  config.vm.box = "ubuntu/jammy64"
+nodes = [
+  { name: "lb",   ip: "192.168.56.5",   ports: [{guest:80, host:8083}, {guest:22, host:2223}] },
+  { name: "web1", ip: "192.168.56.101", ports: [{guest:80, host:8084}, {guest:22, host:2224}] },
+  { name: "web2", ip: "192.168.56.102", ports: [{guest:80, host:8086}, {guest:22, host:2225}] },
+  { name: "db",   ip: "192.168.56.20",  ports: [{guest:22, host:2230}] }
+]
 
-  config.vm.provider "virtualbox" do |vb|
-    vb.memory = 1024
-    vb.cpus = 1
-  end
+nodes.each do |node|
+  Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    config.vm.define node[:name] do |vm|
+      vm.vm.box = "ubuntu/jammy64"
+      vm.vm.hostname = node[:name]
 
-  # Load Balancer
-  config.vm.define "lb" do |lb|
-    lb.vm.hostname = "lb"
-    lb.vm.network "private_network", ip: "192.168.56.5"
-    lb.vm.network "forwarded_port", guest: 80, host: 8083
-    lb.vm.network "forwarded_port", guest: 22, host: 2223
-  end
+      # Set VM resources
+      vm.vm.provider "virtualbox" do |vb|
+        vb.memory = 1024
+        vb.cpus   = 1
+      end
 
-  # Web1
-  config.vm.define "web1" do |web|
-    web.vm.hostname = "web1"
-    web.vm.network "private_network", ip: "192.168.56.101"
-    web.vm.network "forwarded_port", guest: 80, host: 8084
-    web.vm.network "forwarded_port", guest: 22, host: 2224
-  end
+      # Set network interfaces
+      vm.vm.network "private_network", ip: node[:ip]
 
-  # Web2
-  config.vm.define "web2" do |web|
-    web.vm.hostname = "web2"
-    web.vm.network "private_network", ip: "192.168.56.102"
-    web.vm.network "forwarded_port", guest: 80, host: 8086
-    web.vm.network "forwarded_port", guest: 22, host: 2225
-  end
-
-  # Database
-  config.vm.define "db" do |db|
-    db.vm.hostname = "db"
-    db.vm.network "private_network", ip: "192.168.56.20"
-    db.vm.network "forwarded_port", guest: 22, host: 2230
+      # Forwarded ports
+      node[:ports].each do |port|
+        vm.vm.network "forwarded_port", guest: port[:guest], host: port[:host]
+      end
+    end
   end
 end

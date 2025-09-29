@@ -1,30 +1,12 @@
+variable "prebuilt_box_path" {
+  default = "C:/Users/AMEY/Desktop/terraform-gcp-ansible/prebuilt_box"
+}
+
 variable "vms" {
   default = [
-    {
-      name    = "lb"
-      ip      = "192.168.56.5"
-      type    = "loadbalancer"
-      forward = [80, 8083]
-    },
-    {
-      name    = "web1"
-      ip      = "192.168.56.101"
-      type    = "web"
-      message = "<h1>Web Server 1</h1>"
-      forward = [80, 8084]
-    },
-    {
-      name    = "web2"
-      ip      = "192.168.56.102"
-      type    = "web"
-      message = "<h1>Web Server 2</h1>"
-      forward = [80, 8086]
-    },
-    {
-      name    = "db"
-      ip      = "192.168.56.20"
-      type    = "db"
-      forward = [22, 2230]
-    }
+    { name = "lb", ip = "192.168.56.5", ports = [8083, 2223] },
+    { name = "web1", ip = "192.168.56.101", ports = [8084, 2224] },
+    { name = "web2", ip = "192.168.56.102", ports = [8086, 2225] },
+    { name = "db", ip = "192.168.56.20", ports = [2230] }
   ]
 }
