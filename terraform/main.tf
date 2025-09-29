@@ -25,18 +25,28 @@ resource "null_resource" "vagrant_up" {
   }
 }
 
+# Dynamic VM SSH ports mapping
+locals {
+  vm_ports = {
+    lb   = 2223
+    web1 = 2224
+    web2 = 2225
+    db   = 2230
+  }
+}
+
 # Generate dynamic Ansible inventory
 resource "local_file" "ansible_inventory" {
   content = <<EOT
 [loadbalancer]
-lb ansible_host=127.0.0.1 ansible_port=2223 ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
+lb ansible_host=127.0.0.1 ansible_port=${local.vm_ports.lb} ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
 
 [webservers]
-web1 ansible_host=127.0.0.1 ansible_port=2224 ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
-web2 ansible_host=127.0.0.1 ansible_port=2225 ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
+web1 ansible_host=127.0.0.1 ansible_port=${local.vm_ports.web1} ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
+web2 ansible_host=127.0.0.1 ansible_port=${local.vm_ports.web2} ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
 
 [databases]
-db ansible_host=127.0.0.1 ansible_port=2230 ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
+db ansible_host=127.0.0.1 ansible_port=${local.vm_ports.db} ansible_user=vagrant ansible_ssh_private_key_file=C:/Users/AMEY/.vagrant.d/insecure_private_key
 EOT
 
   filename   = "../ansible/inventory.ini"
@@ -45,7 +55,7 @@ EOT
 
 # Run Ansible playbook after VMs are up
 resource "null_resource" "ansible_provision" {
-  depends_on = [null_resource.vagrant_up, local_file.ansible_inventory]
+  depends_on = [local_file.ansible_inventory]
 
   provisioner "local-exec" {
     interpreter = ["PowerShell", "-Command"]
@@ -56,10 +66,10 @@ resource "null_resource" "ansible_provision" {
 # Output VM Info
 output "vm_info" {
   value = <<EOT
-Load Balancer:  http://localhost:8083  (SSH: localhost:2223)
-Web1:           http://localhost:8084  (SSH: localhost:2224)
-Web2:           http://localhost:8086  (SSH: localhost:2225)
-Database:       SSH: localhost:2230
+Load Balancer:  http://localhost:${local.vm_ports.lb}  (SSH: localhost:${local.vm_ports.lb})
+Web1:           http://localhost:${local.vm_ports.web1}  (SSH: localhost:${local.vm_ports.web1})
+Web2:           http://localhost:${local.vm_ports.web2}  (SSH: localhost:${local.vm_ports.web2})
+Database:       SSH: localhost:${local.vm_ports.db}
 Private IPs:    LB=192.168.56.5, Web1=192.168.56.101, Web2=192.168.56.102, DB=192.168.56.20
 EOT
 }
